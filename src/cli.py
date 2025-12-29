@@ -1,6 +1,7 @@
 import argparse
 from src import data
 
+
 def init(args):
     data.init()
 
@@ -9,9 +10,9 @@ def hash_objects(args):
     data.hash_objects(args)
 
 def parse_args():
-    parser= argparse.ArgumentParser(prog="ding")
+    parser = argparse.ArgumentParser(prog="ding")
 
-    commands= parser.add_subparsers(dest="command", required=True)
+    commands = parser.add_subparsers(dest="command", required=True)
 
     init_parser = commands.add_parser("init")
     init_parser.set_defaults(func=init)

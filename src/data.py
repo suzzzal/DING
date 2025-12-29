@@ -3,6 +3,7 @@ import hashlib
  
 Ding_dir = ".ding"
 
+
 def init():
     cwd = os.getcwd()
     ding_path = os.path.join(cwd, Ding_dir)
