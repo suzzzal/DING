@@ -1,8 +1,8 @@
 import os
 import hashlib
+import zstandard as zstd  # Import the Zstd library
 
 DING_DIR = ".ding"
-
 
 def init(path):
     abs_path = os.path.abspath(path)
@@ -24,7 +24,7 @@ def init(path):
 
     os.mkdir(ding_path)
     os.mkdir(objects_path)
-    print(f"Initialisied a ding repo in {ding_path}")
+    print(f"Initialised a ding repo in {ding_path}")
 
 
 def repo_path():
@@ -42,7 +42,6 @@ def repo_path():
         cwd = parent
 
     return None
-
 
 def hash_objects(args):
     repo = repo_path()
@@ -63,8 +62,22 @@ def hash_objects(args):
         print(f"error: file not found: {filename}")
         return
 
+    # 1. Hashing Strategy:
+    # We hash the RAW content. This ensures the Object ID (OID) depends only 
+    # on the data, not on the compression level or library version.
     oid = hashlib.sha256(content).hexdigest()
     print(oid)
+    
     object_file_path = os.path.join(objects_path, oid)
-    with open(object_file_path, "wb") as f:
-        f.write(content)
+
+    # 2. Compression Logic:
+    # We initialize a compressor with Level 3 (default default balance of speed/size).
+    cctx = zstd.ZstdCompressor(level=3)
+    compressed_content = cctx.compress(content)
+
+    # 3. Write Compressed Data:
+    # If the file already exists, we skip writing (deduplication),
+    # otherwise we write the Zstd compressed bytes.
+    if not os.path.exists(object_file_path):
+        with open(object_file_path, "wb") as f:
+            f.write(compressed_content)
