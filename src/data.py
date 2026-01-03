@@ -1,7 +1,12 @@
 import os
 import hashlib
+from compression import zstd
 
 DING_DIR = ".ding"
+
+# create a reusable compressor / decompressor
+_COMPRESSOR = zstd.ZstdCompressor()
+_DECOMPRESSOR = zstd.ZstdDecompressor()
 
 
 def init(path):
@@ -49,9 +54,10 @@ def hash_objects(args):
     if repo is None:
         print("error: not inside a ding repository")
         return
-    ding_path = os.path.join(repo, DING_DIR)
 
+    ding_path = os.path.join(repo, DING_DIR)
     objects_path = os.path.join(ding_path, "objects")
+
     if not os.path.exists(objects_path):
         os.mkdir(objects_path)
 
@@ -63,8 +69,13 @@ def hash_objects(args):
         print(f"error: file not found: {filename}")
         return
 
+    # hash is calculated on raw (uncompressed) content
     oid = hashlib.sha256(content).hexdigest()
     print(oid)
+
+    # compress before storing
+    compressed_content = _COMPRESSOR.compress(content)
+
     object_file_path = os.path.join(objects_path, oid)
     with open(object_file_path, "wb") as f:
-        f.write(content)
+        f.write(compressed_content)
